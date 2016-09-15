@@ -24,7 +24,7 @@ void handle_segv(int sig_id)
 int get_access(char * addr)
 {
 	struct sigaction act, oldact;
-	int mem_mode = MEM_NO;
+	int mem_mode = MEM_NO; // assume we can't access address
 	char read_data, write_data = '1';
 
 	// Setup custom SIGSEGV handler
@@ -34,13 +34,11 @@ int get_access(char * addr)
 	sigaction(SIGSEGV, &act, &oldact);
 	
 	// Get read/write mode of given address
-
 	if (!setjmp(env)) {
 		//printf("Reading from %p...\n", addr);
 		read_data = *addr;
 		mem_mode = MEM_RO;
 	}
-
 	if (!setjmp(env)) {
 		//printf("Writing to %p...\n", addr);
 		*addr = write_data;
