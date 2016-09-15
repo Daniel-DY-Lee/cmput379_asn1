@@ -36,13 +36,13 @@ int get_access(char * addr)
 	// Get read/write mode of given address
 
 	if (!setjmp(env)) {
-		printf("Reading from %p...\n", addr);
+		//printf("Reading from %p...\n", addr);
 		read_data = *addr;
 		mem_mode = MEM_RO;
 	}
 
 	if (!setjmp(env)) {
-		printf("Writing to %p...\n", addr);
+		//printf("Writing to %p...\n", addr);
 		*addr = write_data;
 		mem_mode = MEM_RW;
 	}
@@ -61,6 +61,11 @@ void scan_memory(void)
 
 	while (curr_addr <= (char *) MAX_ADDR) {
 		mem_mode = get_access(curr_addr);
+		if (mem_mode != MEM_NO)
+			printf("Accessed %p\n", curr_addr);	
+		if (curr_addr + PAGE_SIZE < curr_addr)
+			//overflow detected
+			break;
 		curr_addr += PAGE_SIZE;
 	} 
 
