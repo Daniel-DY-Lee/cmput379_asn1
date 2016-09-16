@@ -53,25 +53,6 @@ int get_mem_mode(char * addr)
 	return mem_mode;
 }
 
-/*
-void scan_memory(void)
-{
-	//int mem_mode;
-
-	char *curr_addr = (char *) MIN_ADDR;
-
-	while (curr_addr <= (char *) MAX_ADDR) {
-		get_mem_mode(curr_addr);
-		if (curr_addr + PAGE_SIZE < curr_addr)
-			//overflow detected
-			break;
-		curr_addr += PAGE_SIZE;
-	}
-
-}
-
-*/
-
 int get_mem_layout (struct memregion *regions, unsigned int size)
 {
 	int mem_mode;
