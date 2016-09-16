@@ -93,16 +93,21 @@ int get_mem_layout (struct memregion *regions, unsigned int size)
 
 			// Move to next region (if available)
 			// and set first address and r/w mode of it.
-			
-			// TODO: TEST
-			//if (++r_i > size) break;
-			++r_i;
+			if (++r_i > size) break;
 			regions[r_i].from = curr_addr;
 			regions[r_i].mode = curr_mem_mode;
 		}
 
 		// Ensure increment address without overflow
-		if (curr_addr + PAGE_SIZE <= curr_addr) break;
+		if (curr_addr + PAGE_SIZE <= curr_addr) {
+			// (Last possible address)
+
+			// Set final address of last region.
+			regions[r_i].to = curr_addr;
+
+			// Exit loop before overflow
+			break;
+		}
 		curr_addr += PAGE_SIZE;
 		
 	}
