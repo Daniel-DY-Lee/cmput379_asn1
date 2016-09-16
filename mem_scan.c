@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <setjmp.h>
+#include "mem_scan.h"
 
 static const int PAGE_SIZE = 4096, 
 	MIN_ADDR = 0x0, 
@@ -67,6 +68,17 @@ void scan_memory(void)
 		curr_addr += PAGE_SIZE;
 	}
 
+}
+
+int get_mem_layout (struct memregion *regions, unsigned int size)
+{
+	return 0;
+}
+
+int get_mem_diff (struct memregion *regions, unsigned int howmany,
+	struct memregion *thediff, unsigned int diffsize) 
+{
+	return 0;
 }
 
 

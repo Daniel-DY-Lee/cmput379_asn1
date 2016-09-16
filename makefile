@@ -28,7 +28,3 @@ clean:
 
 run:
 	./asn1
-
-fun: 
-	make clean
-	make 
