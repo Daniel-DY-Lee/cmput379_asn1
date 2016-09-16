@@ -5,10 +5,6 @@
 #include <signal.h>
 #include <setjmp.h>
 
-#define MEM_RW 0
-#define MEM_RO 1
-#define MEM_NO 2
-
 static const int PAGE_SIZE = 4096, 
 	MIN_ADDR = 0x0, 
 	MAX_ADDR = 0xFFFFFFFF;
@@ -72,6 +68,7 @@ void scan_memory(void)
 	}
 
 }
+
 
 int main(void)
 {
