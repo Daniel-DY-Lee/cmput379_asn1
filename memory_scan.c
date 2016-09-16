@@ -9,9 +9,6 @@
 #define MEM_RO 1
 #define MEM_NO 2
 
-#define WRITE 0
-#define READ 1
-
 static const int PAGE_SIZE = 4096, 
 	MIN_ADDR = 0x0, 
 	MAX_ADDR = 0xFFFFFFFF;
