@@ -45,6 +45,8 @@ int get_mem_mode(void *curr_addr)
 		*addr = write_data;
 		// (Successful write)
 		mem_mode = MEM_RW;
+		// Reset address value
+		*addr = read_data;
 	}
 		
 	// Unset custom SIGSEGV handler
@@ -77,13 +79,11 @@ int get_mem_layout (struct memregion *regions, unsigned int size)
 		// Look for new r/w mode and therefore new region.
 		if (curr_region.mode != curr_mem_mode) {
 
-			// New region found.
-			count++;
-
 			// Set final address of current region.
 			if (r_i < size) {
 				curr_region.to = curr_addr - PAGE_SIZE;
 				regions[r_i] = curr_region;
+				count++;
 			}
 
 			// Move to next region
@@ -102,17 +102,18 @@ int get_mem_layout (struct memregion *regions, unsigned int size)
 			if (r_i < size) {
 				curr_region.to = curr_addr;
 				regions[r_i] = curr_region;
+				count++;
 			}
 
 			// Exit loop before overflow.
 			break;
 		}
 
-		// Safe to increment
+		// Safe to increment address.
 		curr_addr += PAGE_SIZE;
 	}
 
-	return count;
+	return count;	// number of found regions.
 }
 
 int get_mem_diff (struct memregion *regions, unsigned int howmany,
@@ -126,7 +127,7 @@ int main(void)
 {
 
 	// Setup our function and tests
-	unsigned int r_i, ret_size, print_size, size = 1;
+	unsigned int r_i, ret_size, print_size, size = MAX_SIZE;
 	struct memregion regions[size];
 	
 	// Run our function
@@ -138,25 +139,12 @@ int main(void)
 
 	// Test output of our function
 	for (r_i = 0; r_i < print_size; r_i++) {
-		printf("Region %d: %p --> %p, mode: ", 
+		printf("Region %d: %p --> %p, mode: %u\n", 
 			r_i,
 			regions[r_i].from,
-			regions[r_i].to);
+			regions[r_i].to,
+			regions[r_i].mode);
 		
-		switch(regions[r_i].mode) {
-			case MEM_RO:
-				printf("RO\n");
-				break;
-			case MEM_RW:
-				printf("RW\n");
-				break;
-			case MEM_NO:
-				printf("NO\n");
-				break;
-			default: 
-				printf("Unknown\n");
-				break;
-		}
 	}
 
 	return 0;
