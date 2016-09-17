@@ -124,7 +124,7 @@ void print_region(struct memregion region)
 			printf("RO\n");
 			break;
 		case MEM_RW:
-			printf("RW-----\n");
+			printf("RW\n");
 			break;
 		case MEM_NO:
 			printf("NO\n");
