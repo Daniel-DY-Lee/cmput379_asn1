@@ -50,7 +50,7 @@ unsigned char get_mem_mode(void *curr_addr)
 	// Unset custom SIGSEGV handler.
 	sigaction(SIGSEGV, &oldact, 0);
 
-	// r/w mode unchanged means no successful read nor write.
+	// Return r/w mode. Unchanged means no access.
 	return (unsigned char) mem_mode;
 }
 
