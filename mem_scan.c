@@ -34,6 +34,7 @@ int get_mem_mode(void *curr_addr)
 	sigaction(SIGSEGV, &act, &oldact);
 	
 	// Get read/write mode of given address
+	// (with seg faults prepped for and handled).
 	if (!setjmp(env)) {
 		if ((read_data = (char) *addr)) {
 			// (Successful read)
@@ -55,14 +56,16 @@ int get_mem_mode(void *curr_addr)
 
 int get_mem_layout (struct memregion *regions, unsigned int size)
 {
+	struct memregion curr_region;		// current memregion
 	unsigned char curr_mem_mode;		// current r/w mode
 	unsigned int r_i = 0;			// current region index
+	unsigned int count = 0;			// counts regions
 	void *max_addr = (void *) MAX_ADDR;	// max address
 	void *curr_addr = (void *) MIN_ADDR;	// current address
 
 	// Setup the first region
-	regions[r_i].from = curr_addr;
-	regions[r_i].mode = (unsigned char) get_mem_mode(curr_addr);
+	curr_region.from = curr_addr;
+	curr_region.mode = (unsigned char) get_mem_mode(curr_addr);
 	curr_addr += PAGE_SIZE;
 
 	// Iterate through address space starting after first address.
@@ -72,28 +75,34 @@ int get_mem_layout (struct memregion *regions, unsigned int size)
 		curr_mem_mode = (unsigned char) get_mem_mode(curr_addr);
 		
 		// Look for new r/w mode and therefore new region.
-		if (regions[r_i].mode != curr_mem_mode) {
-			// (New region found).
+		if (curr_region.mode != curr_mem_mode) {
+
+			// New region found.
+			count++;
 
 			// Set final address of current region.
-			if (r_i <= size) 
-				regions[r_i].to = curr_addr - PAGE_SIZE;
+			if (r_i < size) {
+				curr_region.to = curr_addr - PAGE_SIZE;
+				regions[r_i] = curr_region;
+			}
 
-			// Move to next region (if size permits)
+			// Move to next region
 			// and set first address and r/w mode of it
-			if (++r_i <= size) {
-				regions[r_i].from = curr_addr;
-				regions[r_i].mode = curr_mem_mode;
+			if (++r_i < size) {
+				curr_region.from = curr_addr;
+				curr_region.mode = curr_mem_mode;
 			}
 		}
 
-		// See if next increment causes overflow.
+		// See if next increment causes overflow,
+		// therefore last possible address.
 		if (curr_addr + PAGE_SIZE <= curr_addr) {
-			// (Last possible address).
 
 			// Set final address of last region.
-			if (r_i <= size)
-				regions[r_i].to = curr_addr;
+			if (r_i < size) {
+				curr_region.to = curr_addr;
+				regions[r_i] = curr_region;
+			}
 
 			// Exit loop before overflow.
 			break;
@@ -101,10 +110,9 @@ int get_mem_layout (struct memregion *regions, unsigned int size)
 
 		// Safe to increment
 		curr_addr += PAGE_SIZE;
-		
 	}
 
-	return r_i + 1; // size is one more than max index
+	return count;
 }
 
 int get_mem_diff (struct memregion *regions, unsigned int howmany,
@@ -118,14 +126,18 @@ int main(void)
 {
 
 	// Setup our function and tests
-	unsigned int r_i, ret_size, size = MAX_SIZE;
+	unsigned int r_i, ret_size, print_size, size = 1;
 	struct memregion regions[size];
 	
 	// Run our function
 	ret_size = get_mem_layout(regions, size);
 
+	// Get the smaller of size asked for and actual size.
+	print_size = size;
+	if (ret_size < size) print_size = ret_size;
+
 	// Test output of our function
-	for (r_i = 0; r_i < ret_size; r_i++) {
+	for (r_i = 0; r_i < print_size; r_i++) {
 		printf("Region %d: %p --> %p, mode: ", 
 			r_i,
 			regions[r_i].from,
