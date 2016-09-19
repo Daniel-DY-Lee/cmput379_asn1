@@ -4,7 +4,8 @@
 #include <inttypes.h>		// for standard compliant pointer printing
 #include "memlayout.h"
 
-static const unsigned int 
+// TODO: REMOVE BEFORE DELIVERY
+const unsigned int 
 	PAGE_SIZE = 0x400,
 	MIN_SIZE = 2, 
 	MAX_SIZE = 65536;
@@ -40,7 +41,7 @@ unsigned char get_mem_mode(void *curr_addr)
 		*addr = write_data;
 		mem_mode = MEM_RW;
 
-		// Reset value of accessed address.
+		// Reset value of write-accessed address.
 		*addr = read_data;
 
 	}
@@ -102,8 +103,15 @@ int get_mem_layout (struct memregion *regions, unsigned int size)
 
 int get_mem_diff (struct memregion *regions, unsigned int howmany,
 	struct memregion *thediff, unsigned int diffsize) 
-{
-	return 0;
+{	
+	// unsigned int count = 0;
+	// unsigned int d_i, r_i, c_i;
+	int ret;
+	//struct memregion curr_regions[howmany];
+
+	ret = get_mem_layout(thediff, MAX_SIZE);
+
+	return ret;
 }
 
 void print_region(struct memregion region)
@@ -134,25 +142,39 @@ void print_region(struct memregion region)
 int main(void)
 {
 	// Setup our function and tests
-	unsigned int r_i, ret_size, print_size, size = MAX_SIZE;
-	struct memregion regions[size];
+	unsigned int r_i, howmany,
+		regions_size = MAX_SIZE, diff_size = MAX_SIZE;
+	int ret;
+	struct memregion regions[regions_size], thediff[diff_size];
 	
 	// Run our function
-	ret_size = get_mem_layout(regions, size);
-	printf("Found %d regions\n", ret_size);
+	ret = get_mem_layout(regions, regions_size);
 
 	// Get the smaller of size asked for and actual size.
-	print_size = size;
-	if (ret_size < size)
-		print_size = ret_size;
+	howmany = regions_size;
+	if (ret < regions_size)
+		howmany = ret;
 
 	// Test output of our function
-	for (r_i = 0; r_i < print_size; r_i++)
+	for (r_i = 0; r_i < howmany; r_i++)
 		print_region(regions[r_i]);
 		
+	// Run our second function
+	ret = get_mem_diff(regions, howmany, thediff, diff_size);
+	
+	// Get the smaller of size asked for and actual size.
+	howmany = diff_size;
+	if (ret < diff_size)
+		howmany = ret;
+
+	// Test output of our function
+	for (r_i = 0; r_i < howmany; r_i++)
+		print_region(thediff[r_i]);
+
 	while (1) {
 		
 	}
+
 	return 0;
 }
 
