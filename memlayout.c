@@ -4,7 +4,7 @@
 #include <setjmp.h>
 #include <inttypes.h>
 #include <stdint.h>
-#include "mem_scan.h"
+#include "memlayout.h"
 
 static const unsigned int 
 	PAGE_SIZE = 0x400,
@@ -59,7 +59,7 @@ int get_mem_layout (struct memregion *regions, unsigned int size)
 	struct memregion curr_region;		// current memregion
 	unsigned char curr_mem_mode;		// current r/w mode
 	unsigned int r_i = 0;			// current region index
-	unsigned int count = 0;			// counts regions
+	unsigned int count = 1;			// counts regions
 	void *curr_addr = (void *) 0x0;		// current address
 
 	// Setup the first region's intial address and r/w mode.
@@ -77,27 +77,24 @@ int get_mem_layout (struct memregion *regions, unsigned int size)
 		if (curr_region.mode == curr_mem_mode) 
 			continue;
 
-		// Different memory mode? New region found! 
-		// Set final address of current region if returnable.
+		// New region found! We know the last address of previous.
+		curr_region.to = curr_addr - PAGE_SIZE;
+		 
+		// Save returnable region and prep for next one.
 		if (r_i < size) {
-			curr_region.to = curr_addr - PAGE_SIZE;
 			regions[r_i] = curr_region;
-			count++;
+			r_i++;
 		}
 
-		// Setup for next region if returnable and 
-		// intitialize first address and r/w mode of it.
-		if (++r_i < size) {
-			curr_region.from = curr_addr;
-			curr_region.mode = curr_mem_mode;
-		}
+		curr_region.from = curr_addr;
+		curr_region.mode = curr_mem_mode;
+		count++;
 	}
 
 	// Set final address of last region if returnable.
+	curr_region.to = curr_addr;
 	if (r_i < size) {
-		curr_region.to = curr_addr;
 		regions[r_i] = curr_region;
-		count++;
 	}
 
 	return count;	// number of found regions.
@@ -142,6 +139,7 @@ int main(void)
 	
 	// Run our function
 	ret_size = get_mem_layout(regions, size);
+	printf("Found %d regions\n", ret_size);
 
 	// Get the smaller of size asked for and actual size.
 	print_size = size;
@@ -152,6 +150,8 @@ int main(void)
 	for (r_i = 0; r_i < print_size; r_i++)
 		print_region(regions[r_i]);	
 
+	// TODO LOOP TEST
+	while (1) {}
 	return 0;
 }
 
