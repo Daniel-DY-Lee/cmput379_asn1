@@ -1,9 +1,7 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <signal.h>
 #include <setjmp.h>
-#include <inttypes.h>
-#include <stdint.h>
+#include <inttypes.h>		// for standard compliant pointer printing
 #include "memlayout.h"
 
 static const unsigned int 
@@ -23,7 +21,7 @@ unsigned char get_mem_mode(void *curr_addr)
 	struct sigaction act, oldact;		// signal handler items
 	char read_data, write_data = 1;		// read/write checkers
 	char *addr = (char *) curr_addr;	// current address
-	int mem_mode = MEM_NO; 			// assume r/w mode then test
+	unsigned char mem_mode = MEM_NO; 	// assume r/w mode then test
 
 	// Set custom SIGSEGV handler for illegal memory accesses (segfault).
 	act.sa_handler = handle_segv;
@@ -31,27 +29,27 @@ unsigned char get_mem_mode(void *curr_addr)
 	act.sa_flags = SA_NODEFER;		// TODO: NEEDED!!! But why?
 	sigaction(SIGSEGV, &act, &oldact);
 	
-	// Try to read, jump here and skip upon any segfaults.
-	if (!setjmp(env) && (read_data = (char) *addr)) {
-
-		// Read successful.
+	// Expect for SIGSEGV for certain addresses, skip this if occurs.
+	if (!setjmp(env)) {
+	
+		// Try to read.
+		read_data = (char) *addr;
 		mem_mode = MEM_RO;
-
+		
 		// Try to write.
 		*addr = write_data;
-
-		// Write successful.
 		mem_mode = MEM_RW;
 
 		// Reset value of accessed address.
 		*addr = read_data;
+
 	}
-		
+
 	// Unset custom SIGSEGV handler.
 	sigaction(SIGSEGV, &oldact, 0);
 
 	// Return r/w mode. Unchanged means no access.
-	return (unsigned char) mem_mode;
+	return mem_mode;
 }
 
 int get_mem_layout (struct memregion *regions, unsigned int size)
@@ -60,7 +58,7 @@ int get_mem_layout (struct memregion *regions, unsigned int size)
 	unsigned char curr_mem_mode;		// current r/w mode
 	unsigned int r_i = 0;			// current region index
 	unsigned int count = 1;			// counts regions
-	void *curr_addr = (void *) 0x0;		// current address
+	void *curr_addr = (void *) 0x0;		// current address (start low)
 
 	// Setup the first region's intial address and r/w mode.
 	curr_region.from = curr_addr;
@@ -77,15 +75,17 @@ int get_mem_layout (struct memregion *regions, unsigned int size)
 		if (curr_region.mode == curr_mem_mode) 
 			continue;
 
-		// New region found! We know the last address of previous.
+		// New region found!
+		// Get the last address of previous region.
 		curr_region.to = curr_addr - PAGE_SIZE;
 		 
-		// Save returnable region and prep for next one.
+		// Save region if returnable.
 		if (r_i < size) {
 			regions[r_i] = curr_region;
 			r_i++;
 		}
 
+		// Prep next region.
 		curr_region.from = curr_addr;
 		curr_region.mode = curr_mem_mode;
 		count++;
@@ -148,10 +148,11 @@ int main(void)
 
 	// Test output of our function
 	for (r_i = 0; r_i < print_size; r_i++)
-		print_region(regions[r_i]);	
-
-	// TODO LOOP TEST
-	while (1) {}
+		print_region(regions[r_i]);
+		
+	while (1) {
+		
+	}
 	return 0;
 }
 
