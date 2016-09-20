@@ -130,6 +130,7 @@ int get_mem_diff (struct memregion *regions, unsigned int howmany,
 	char *curr_addr = (char *) 0x0;
 	unsigned char curr_mem_mode, exp_mem_mode;
 	struct memregion curr_diff;
+	int search_flag = 1, end_flag = 0;
 
 	while (curr_addr < curr_addr + PAGE_SIZE) {
 		
@@ -138,29 +139,44 @@ int get_mem_diff (struct memregion *regions, unsigned int howmany,
 		curr_mem_mode = 
 			get_mem_mode_from_access(curr_addr);
 
-		if ((exp_mem_mode == curr_mem_mode 
-			|| curr_mem_mode != curr_diff.mode)
-			&& count > 1) {
-
-			// Save previous diff region if returnable.
-			curr_diff.to = curr_addr - PAGE_SIZE;
-			if (d_i < diffsize) {	
-				thediff[d_i] = curr_diff;
-				d_i++;
-			}	
-		
-		}
-
-		if ((exp_mem_mode != curr_mem_mode)) {
+		if (curr_mem_mode != exp_mem_mode && search_flag) {
 			curr_diff.from = curr_addr;
 			curr_diff.mode = curr_mem_mode;
-			count++;
+			search_flag = 0;
+		}
+	
+		if (!search_flag) {
+
+			if ((curr_mem_mode == exp_mem_mode)) {
+				end_flag = 1;
+			}
+
+			if (curr_diff.mode != curr_mem_mode) {
+				end_flag = 1;
+			}
+
 		}
 
+		if (end_flag) {
+			curr_diff.to = curr_addr - PAGE_SIZE;
+			count++;
+			if (d_i < diffsize) {
+				thediff[d_i] = curr_diff;
+				d_i++;
+			}
+			search_flag = 1;
+			end_flag = 0;
+
+		}
+
+
 		curr_addr += PAGE_SIZE;
+
 	}
 
-	printf("%d diffs found\n", count);
+
+	// TODO What happens to last address?
+
 	return count;
 }
 
@@ -205,6 +221,8 @@ int main (void)
 	if (ret < regions_size)
 		howmany = ret;
 
+	printf("---%d regions found.---\n", ret);
+
 	// Test output of our function
 	for (r_i = 0; r_i < howmany; r_i++)
 		print_region(regions[r_i]);
@@ -216,6 +234,8 @@ int main (void)
 	howmany = diff_size;
 	if (ret < diff_size)
 		howmany = ret;
+
+	printf("---%d diffs found.---\n", ret);
 
 	// Test output of our function
 	for (r_i = 0; r_i < howmany; r_i++)
