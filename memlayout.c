@@ -12,12 +12,12 @@ const unsigned int
 
 static jmp_buf env;
 
-void handle_segv(int sig_id)
+void handle_segv (int sig_id)
 {	
 	longjmp(env, 1);
 }
 
-unsigned char get_mem_mode(void *curr_addr)
+unsigned char get_mem_mode_from_access (void *curr_addr)
 {
 	struct sigaction act, oldact;		// signal handler items
 	char read_data, write_data = 1;		// read/write checkers
@@ -63,14 +63,14 @@ int get_mem_layout (struct memregion *regions, unsigned int size)
 
 	// Setup the first region's intial address and r/w mode.
 	curr_region.from = curr_addr;
-	curr_region.mode = get_mem_mode(curr_addr);
+	curr_region.mode = get_mem_mode_from_access(curr_addr);
 
 	// Iterate through address space until overflow.
 	while (curr_addr + PAGE_SIZE > curr_addr) {
 
 		// Get next address and its r/w mode.
 		curr_addr += PAGE_SIZE;
-		curr_mem_mode = get_mem_mode(curr_addr);
+		curr_mem_mode = get_mem_mode_from_access(curr_addr);
 		
 		// Same r/w mode means same region, consider next address.
 		if (curr_region.mode == curr_mem_mode) 
@@ -101,20 +101,70 @@ int get_mem_layout (struct memregion *regions, unsigned int size)
 	return count;	// number of found regions.
 }
 
+unsigned char get_mem_mode_from_layout (struct memregion *regions, 
+	unsigned int howmany, char *addr) 
+{
+	unsigned int r_i;
+	unsigned char mem_mode;
+	struct memregion curr_region;
+
+	for (r_i = 0; r_i < howmany; r_i++) {
+		curr_region = regions[r_i];
+		if (addr >= (char *) curr_region.from 
+			&& addr <= (char *) curr_region.to) {
+			mem_mode = curr_region.mode;
+			break;
+		}
+	}
+
+	return mem_mode;
+}
+
 int get_mem_diff (struct memregion *regions, unsigned int howmany,
 	struct memregion *thediff, unsigned int diffsize) 
 {	
 	// unsigned int count = 0;
 	// unsigned int d_i, r_i, c_i;
-	int ret;
-	//struct memregion curr_regions[howmany];
+	unsigned int d_i = 0;
+	unsigned int count = 0;
+	char *curr_addr = (char *) 0x0;
+	unsigned char curr_mem_mode, exp_mem_mode;
+	struct memregion curr_diff;
 
-	ret = get_mem_layout(thediff, MAX_SIZE);
+	while (curr_addr < curr_addr + PAGE_SIZE) {
+		
+		exp_mem_mode = 
+			get_mem_mode_from_layout(regions, howmany, curr_addr);
+		curr_mem_mode = 
+			get_mem_mode_from_access(curr_addr);
 
-	return ret;
+		if ((exp_mem_mode == curr_mem_mode 
+			|| curr_mem_mode != curr_diff.mode)
+			&& count > 1) {
+
+			// Save previous diff region if returnable.
+			curr_diff.to = curr_addr - PAGE_SIZE;
+			if (d_i < diffsize) {	
+				thediff[d_i] = curr_diff;
+				d_i++;
+			}	
+		
+		}
+
+		if ((exp_mem_mode != curr_mem_mode)) {
+			curr_diff.from = curr_addr;
+			curr_diff.mode = curr_mem_mode;
+			count++;
+		}
+
+		curr_addr += PAGE_SIZE;
+	}
+
+	printf("%d diffs found\n", count);
+	return count;
 }
 
-void print_region(struct memregion region)
+void print_region (struct memregion region)
 {
 	// http://stackoverflow.com/questions/1255099/whats-the-proper-use-of-printf-to-display-pointers-padded-with-0s
 
@@ -139,7 +189,7 @@ void print_region(struct memregion region)
 	}
 }
 
-int main(void)
+int main (void)
 {
 	// Setup our function and tests
 	unsigned int r_i, howmany,
@@ -171,9 +221,7 @@ int main(void)
 	for (r_i = 0; r_i < howmany; r_i++)
 		print_region(thediff[r_i]);
 
-	while (1) {
-		
-	}
+	//while (1) {}
 
 	return 0;
 }
