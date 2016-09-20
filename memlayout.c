@@ -139,6 +139,13 @@ int get_mem_diff (struct memregion *regions, unsigned int howmany,
 		curr_mem_mode = 
 			get_mem_mode_from_access(curr_addr);
 
+		/* TODO: Verify correctness
+		if (exp_mem_mode != curr_mem_mode) {
+			printf("Difference found at %p (was %d, now %d)\n",
+				curr_addr, exp_mem_mode, curr_mem_mode);
+		}
+		*/ 
+
 		if (curr_mem_mode != exp_mem_mode && search_flag) {
 			curr_diff.from = curr_addr;
 			curr_diff.mode = curr_mem_mode;
@@ -241,7 +248,7 @@ int main (void)
 	for (r_i = 0; r_i < howmany; r_i++)
 		print_region(thediff[r_i]);
 
-	//while (1) {}
+	while (1) {}
 
 	return 0;
 }
