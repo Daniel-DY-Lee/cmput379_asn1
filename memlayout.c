@@ -3,10 +3,11 @@
 #include <setjmp.h>
 #include <inttypes.h>		// for standard compliant pointer printing
 #include "memlayout.h"
+#include "externals.h"
 
 // TODO: REMOVE BEFORE DELIVERY
 const unsigned int 
-	PAGE_SIZE = 0x400,
+	PAGE_SIZE = 0x10000,
 	MIN_SIZE = 2, 
 	MAX_SIZE = 65536;
 
@@ -123,8 +124,6 @@ unsigned char get_mem_mode_from_layout (struct memregion *regions,
 int get_mem_diff (struct memregion *regions, unsigned int howmany,
 	struct memregion *thediff, unsigned int diffsize) 
 {	
-	// unsigned int count = 0;
-	// unsigned int d_i, r_i, c_i;
 	unsigned int d_i = 0;
 	unsigned int count = 0;
 	char *curr_addr = (char *) 0x0;
@@ -138,13 +137,6 @@ int get_mem_diff (struct memregion *regions, unsigned int howmany,
 			get_mem_mode_from_layout(regions, howmany, curr_addr);
 		curr_mem_mode = 
 			get_mem_mode_from_access(curr_addr);
-
-		/* TODO: Verify correctness
-		if (exp_mem_mode != curr_mem_mode) {
-			printf("Difference found at %p (was %d, now %d)\n",
-				curr_addr, exp_mem_mode, curr_mem_mode);
-		}
-		*/ 
 
 		if (curr_mem_mode != exp_mem_mode && search_flag) {
 			curr_diff.from = curr_addr;
