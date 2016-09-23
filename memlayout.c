@@ -7,7 +7,7 @@
 
 // TODO: REMOVE BEFORE DELIVERY
 const unsigned int 
-	PAGE_SIZE = 0x10000,
+	PAGE_SIZE = 0x400,
 	MIN_SIZE = 2, 
 	MAX_SIZE = 65536;
 
@@ -121,60 +121,55 @@ unsigned char get_mem_mode_from_layout (struct memregion *regions,
 	return mem_mode;
 }
 
-int get_mem_diff (struct memregion *regions, unsigned int howmany,
+// TODO CHANGE VARIABLE NAME!!!
+int get_mem_diff (struct memregion *old_regions, unsigned int old_regions_size,
 	struct memregion *thediff, unsigned int diffsize) 
 {	
-	unsigned int d_i = 0;
+	unsigned int i, j, d_i = 0;
 	unsigned int count = 0;
-	char *curr_addr = (char *) 0x0;
-	unsigned char curr_mem_mode, exp_mem_mode;
-	struct memregion curr_diff;
-	int search_flag = 1, end_flag = 0;
+	int is_unique;
+	// char *curr_addr = (char *) 0x0;
+	unsigned int new_size = MAX_SIZE;
 
-	while (curr_addr < curr_addr + PAGE_SIZE) {
-		
-		exp_mem_mode = 
-			get_mem_mode_from_layout(regions, howmany, curr_addr);
-		curr_mem_mode = 
-			get_mem_mode_from_access(curr_addr);
+	struct memregion new_regions[new_size];
 
-		if (curr_mem_mode != exp_mem_mode && search_flag) {
-			curr_diff.from = curr_addr;
-			curr_diff.mode = curr_mem_mode;
-			search_flag = 0;
-		}
+	// Get New Address Space Layout
+	int new_regions_found = get_mem_layout(new_regions, new_size);
+
 	
-		if (!search_flag) {
+	unsigned int new_regions_actual_size = new_size;
+	if (new_regions_found < new_size) 
+		new_regions_actual_size = new_regions_found;
 
-			if ((curr_mem_mode == exp_mem_mode)) {
-				end_flag = 1;
+	//For each memregion in new_regions, if that region does not exist in old_regions, it must be different, so return it in the_diff.
+
+	// Determine if each new region is unique.
+	for (i = 0; i < new_regions_actual_size; i++) {
+
+		// Assume it's unique.
+		is_unique = 1;
+
+		// Check our assumption.
+		for (j = 0; j < old_regions_size; j++) {
+			if ( (new_regions[i].from == old_regions[j].from
+				&& new_regions[i].to == old_regions[j].to
+				&& new_regions[i].mode == old_regions[j].mode) ) 
+			{
+				// Assumption broken!
+				is_unique = 0;
+				break;
 			}
-
-			if (curr_diff.mode != curr_mem_mode) {
-				end_flag = 1;
-			}
-
 		}
-
-		if (end_flag) {
-			curr_diff.to = curr_addr - PAGE_SIZE;
+		
+		if (is_unique) {
+			// Different region found!
 			count++;
 			if (d_i < diffsize) {
-				thediff[d_i] = curr_diff;
+				thediff[d_i] = new_regions[i];
 				d_i++;
 			}
-			search_flag = 1;
-			end_flag = 0;
-
 		}
-
-
-		curr_addr += PAGE_SIZE;
-
 	}
-
-
-	// TODO What happens to last address?
 
 	return count;
 }
