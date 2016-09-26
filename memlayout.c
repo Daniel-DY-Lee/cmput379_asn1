@@ -203,9 +203,9 @@ int main (void)
 {
 	// Setup our function and tests
 	unsigned int r_i, howmany,
-		regions_size = MAX_SIZE, diff_size = MAX_SIZE;
+		regions_size = 4, diffsize = MAX_SIZE;
 	int ret;
-	struct memregion regions[regions_size], thediff[diff_size];
+	struct memregion regions[regions_size], thediff[diffsize];
 	
 	// Run our function
 	ret = get_mem_layout(regions, regions_size);
@@ -222,11 +222,11 @@ int main (void)
 		print_region(regions[r_i]);
 		
 	// Run our second function
-	ret = get_mem_diff(regions, howmany, thediff, diff_size);
+	ret = get_mem_diff(regions, howmany, thediff, diffsize);
 	
 	// Get the smaller of size asked for and actual size.
-	howmany = diff_size;
-	if (ret < diff_size)
+	howmany = diffsize;
+	if (ret < diffsize)
 		howmany = ret;
 
 	printf("---%d diffs found.---\n", ret);
