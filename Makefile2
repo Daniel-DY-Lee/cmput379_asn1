@@ -1,0 +1,8 @@
+memlayout.o: memlayout2.c memlayout.h
+	gcc -Wall -std=c99 memlayout2.c memlayout.h -o memlayout.o
+
+mem_mod1.o: memlayout.o
+	gcc -Wall -std=c99 mem_mod1.c memlayout2.o -o mem_mod1.o
+
+clean:
+	rm *.o
